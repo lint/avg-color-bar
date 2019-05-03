@@ -19,6 +19,27 @@ def genAvgRGB(img):
 	
 	return avg
 
+
+#squares the rgb values before averaging them, then square roots them
+def genAvgRGBSquared(img):
+	
+	#converting image to rgb
+	img = img.convert("RGB")
+	
+	#getting colors
+	colors = img.getcolors(img.size[0] * img.size[1])
+	
+	#one line average
+	avg = [sum([(y[1][x]**2) * y[0] for y in colors]) / float(sum([z[0] for z in colors])) for x in range(3)]
+	
+	avg = tuple([int(math.sqrt(x)) for x in avg])
+	
+	return avg
+
+
+
+
+
 def genAvgHSV(img):
 	
 	#converting image to rgb
@@ -124,7 +145,6 @@ def getCommon(img):
 	
 	
 #xyz conversions refer to D65/2 standard illuminant
-#values taken from http://www.easyrgb.com/en/math.php
 
 def rgb_to_xyz(color):
 	color = [x/255. for x in color]
@@ -238,14 +258,14 @@ def genAvgLab(img):
 	avg = xyz_to_rgb(lab_to_xyz(avg))
 	
 	return avg
-
+	
 	
 #the title of the image
-title = "got-s01e01"
+title = "test"
 
 
 #choose what method to get the color
-#options: rgb, hsv, hue, kmeans, common, lab, xyz
+#options: rgb, hsv, hue, kmeans, common, lab, xyz,rgbsquared
 method = "rgb"
 
 #getting images - images must be number only filenames
@@ -275,12 +295,14 @@ for img in images:
 		color = getAvgXYZ(img)
 	elif method == "lab":
 		color = genAvgLab(img)
-	
+	elif method == "rgbsquared":
+		color = genAvgRGBSquared(img)
 	
 	else:
 		color = genAvgRGB(img)
-		
+	
 	barColors.append(color)
+	
 	
 #creating bar image
 barImg = Image.new("RGB",(len(barColors), max([1,int(len(barColors)/2.5)])))
