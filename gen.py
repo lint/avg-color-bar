@@ -122,22 +122,139 @@ def getCommon(img):
 	
 	return sorted(colors)[-1][1]
 	
-
-#creates images folder
-if not os.path.isdir("images"):
-        os.mkdir("images")
-
-
 	
+#xyz conversions refer to D65/2 standard illuminant
+
+def rgb_to_xyz(color):
+	color = [x/255. for x in color]
 	
+	for value in range(3):
+		if color[value] > .04045:
+			color[value] = ((color[value] + .055) / 1.055) ** 2.4
+		else:
+			color[value] /= 12.92
+	
+	color = [100 * x for x in color]
+	
+	x = color[0] * .4124 + color[1] * .3575 + color[2] * .1805
+	y = color[0] * .2126 + color[1] * .7152 + color[2] * .0722
+	z = color[0] * .0193 + color[1] * .1192 + color[2] * .9505
+	
+	return (x,y,z)
+
+def xyz_to_rgb(xyz):
+	
+	xyz = [x / 100 for x in xyz]
+	
+	r = xyz[0] * 3.2406 + xyz[1] * -1.5372 + xyz[2] * -.4986
+	g = xyz[0] * -.9689 + xyz[1] * 1.8758 + xyz[2] * .0415
+	b = xyz[0] * .0557 + xyz[1] * -.2040 + xyz[2] * 1.0570
+	
+	color = [r,g,b]
+	
+	for value in range(3):
+		if color[value] > .0031308:
+			color[value] = 1.055 * (color[value] ** (1/2.4)) -.055
+		else:
+			color[value]*=12.92
+	
+	color = tuple([int(x*255) for x in color])
+	
+	return color
+	
+def xyz_to_lab(xyz):
+	
+	xyz = [xyz[0] / 95.047, xyz[1] / 100.0, xyz[2] / 108.883]
+	
+	for value in range(3):
+		if xyz[value] > .008856:
+			xyz[value] = xyz[value]**(1./3)
+		else:
+			xyz[value] = (7.787 * xyz[value]) + (16./116)
+		
+		l = (116 * xyz[1]) -16
+		a = 500 * (xyz[0]-xyz[1])
+		b = 200 * (xyz[1]-xyz[2])
+		
+	return (l,a,b)
+
+def lab_to_xyz(lab):
+	
+	y = (lab[0] + 16) / 116.
+	x = lab[1] / 500 + y
+	z = y - lab[2] / 200.
+	
+	xyz = [x,y,z]
+
+	for value in range(3):
+		if xyz[value] ** 3 > .008856:
+			xyz[value] = xyz[value]**3
+		else:
+			xyz[value] = (xyz[value] - 16/116.) / 7.787
+	
+	x = xyz[0] * 95.047
+	y = xyz[1] * 100
+	z = xyz[2] * 108.883
+		
+	return (x,y,z)
+
+
+
+def genAvgXYZ(img):
+	
+	#converting image to rgb
+	img = img.convert("RGB")
+	
+	#getting colors
+	colors = img.getcolors(img.size[0] * img.size[1])
+	
+	#converts to xyz
+	colors = [(w,rgb_to_xyz(x)) for (w,x) in colors]
+	
+	#one line average
+	avg = tuple([sum([y[1][x] * y[0] for y in colors]) / sum([z[0] for z in colors]) for x in range(3)])
+	
+	#back to rgb
+	avg = xyz_to_rgb(avg)
+	
+	return avg
+
+def genAvgLab(img):
+	
+	#converting image to rgb
+	img = img.convert("RGB")
+	
+	#getting colors
+	colors = img.getcolors(img.size[0] * img.size[1])
+	
+	#converts to lab
+	colors = [(w,xyz_to_lab(rgb_to_xyz(x))) for (w,x) in colors]
+	
+	#one line average
+	avg = tuple([sum([y[1][x] * y[0] for y in colors]) / sum([z[0] for z in colors]) for x in range(3)])
+	
+	#back to rgb 
+	avg = xyz_to_rgb(lab_to_xyz(avg))
+	
+	return avg
+
+
+img = Image.open("test:Sailboat")
+
+print genAvgRGB(img)
+print genAvgXYZ(img)
+print genAvgLab(img)
+
+
+
 	
 #the title of the image
-title = "got-s08e03"
+title = "got-s01e01"
 
 
 #choose what method to get the color
-#options: rgb, hsv, hue, kmeans, common
-method = "kmeans"
+#options: rgb, hsv, hue, kmeans, common, lab, xyz
+method = "rgb"
 
 #getting images - images must be number only filenames
 images = ["images/"+x for x in os.listdir("images/")]
@@ -162,6 +279,12 @@ for img in images:
 		color = kmeans(img)
 	elif method == "common":
 		color = getCommon(img)
+	elif method == "xyz":
+		color = getAvgXYZ(img)
+	elif method == "lab":
+		color = genAvgLab(img)
+	
+	
 	else:
 		color = genAvgRGB(img)
 		
@@ -174,7 +297,12 @@ barImg = Image.new("RGB",(len(barColors), max([1,int(len(barColors)/2.5)])))
 barFullData = [x for x in barColors] * barImg.size[1]
 barImg.putdata(barFullData)
 
+#folder to store bar images
+if not os.path.isdir("bars"):
+	os.mkdir("bars")
+
+
 #saving image
-barImg.save("{}_{}.png".format(title,method))
+barImg.save("bars/{}_{}.png".format(title,method))
 #barImg.show()
 
