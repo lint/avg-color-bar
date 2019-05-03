@@ -10,4 +10,6 @@ I understand that in gen.py the tabs are very large, that is due to me producing
 
 To extract the frames I used ffmpeg with the command:
 
-                ffmpeg -i input.mkv -vf fps=.25 images/%04d.jpg
+```
+ffmpeg -i input.mkv -vf fps=.25 images/%04d.jpg
+```
