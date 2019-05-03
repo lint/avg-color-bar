@@ -124,6 +124,7 @@ def getCommon(img):
 	
 	
 #xyz conversions refer to D65/2 standard illuminant
+#values taken from http://www.easyrgb.com/en/math.php
 
 def rgb_to_xyz(color):
 	color = [x/255. for x in color]
