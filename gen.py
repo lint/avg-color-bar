@@ -239,15 +239,6 @@ def genAvgLab(img):
 	
 	return avg
 
-
-img = Image.open("test:Sailboat")
-
-print genAvgRGB(img)
-print genAvgXYZ(img)
-print genAvgLab(img)
-
-
-
 	
 #the title of the image
 title = "got-s01e01"
