@@ -277,7 +277,7 @@ barColors = []
 
 #getting the color for each frame
 for img in images:
-	print img
+	print (img)
 	img = Image.open(img).resize((25,25))
 	
 	#applying correct method
