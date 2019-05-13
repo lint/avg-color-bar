@@ -75,6 +75,12 @@ def genAvgHue(img):
 	
 	return avgHSV
 	
+#calculates the distance between two 3D points
+def calcDist(p1, p2):
+		return math.sqrt(sum([(p1[x]-p2[x])**2 for x in range(len(p1))]))
+
+
+	
 def kmeans(img):
 	img = img.convert("RGB")
 	
@@ -85,8 +91,6 @@ def kmeans(img):
 	def genRandColor():
 		return (random.randint(0,255), random.randint(0,255), random.randint(0,255))
 	
-	def calcDist(p1, p2):
-		return math.sqrt(sum([(p1[x]-p2[x])**2 for x in range(len(p1))]))
 	
 	numCenters = 5
 	centers = []
@@ -258,15 +262,28 @@ def genAvgLab(img):
 	avg = xyz_to_rgb(lab_to_xyz(avg))
 	
 	return avg
+
+
+#uses pillows image resizer to reduce the image to 1 px by 1 px, and return that color
+def genResizedColor(img):
 	
+	return img.convert("RGB").resize((1,1)).getcolors(1)[0][1]
+
+#uses pillow's color quantization to reduce the image to one color, then returns that color
+def genQuantizedColor(img):
+	return img.quantize(1).convert("RGB").getcolors()[0][1]
+
+
+
+
 	
 #the title of the image
-title = "test"
+title = "got-s08e05"
 
 
 #choose what method to get the color
-#options: rgb, hsv, hue, kmeans, common, lab, xyz,rgbsquared
-method = "rgb"
+#options: rgb, hsv, hue, kmeans, common, lab, xyz,rgbsquared,resize,quantize
+method = "rgbsquared"
 
 #getting images - images must be number only filenames
 images = ["images/"+x for x in os.listdir("images/")]
@@ -297,12 +314,24 @@ for img in images:
 		color = genAvgLab(img)
 	elif method == "rgbsquared":
 		color = genAvgRGBSquared(img)
+	elif method == "resize":
+		color = genResizedColor(img)
+	elif method == "quantized":
+		color = genQuantizedColor(img)
 	
 	else:
 		color = genAvgRGB(img)
 	
 	barColors.append(color)
 	
+	
+	
+
+
+
+
+
+
 	
 #creating bar image
 barImg = Image.new("RGB",(len(barColors), max([1,int(len(barColors)/2.5)])))
